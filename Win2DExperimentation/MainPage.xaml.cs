@@ -54,8 +54,20 @@ namespace Win2DExperimentation
 
         private void canvas_Draw(ICanvasAnimatedControl sender, CanvasAnimatedDrawEventArgs args)
         {
+            var session = args.DrawingSession;
             var debug = String.Format("Pos {0},{1}", spherePosition.X, spherePosition.Y);
-            args.DrawingSession.DrawText(debug, new Vector2(0, 0), Colors.Black);
+            
+            session.DrawText(debug, new Vector2(0, 0), Colors.Black);
+            
+            // Figure out the actual pixels
+            var mapWidth = sender.Size.Width;
+            var mapHeight = sender.Size.Height;
+
+            var actualSpherePosition = new Vector2(
+                (float)mapWidth * spherePosition.X / internalWidth,
+                (float)mapHeight * spherePosition.Y / internalHeight);
+
+            session.DrawText("<marquee>", actualSpherePosition, Colors.Blue);
         }
 
         private void canvas_PointerPressed(object sender, PointerRoutedEventArgs e)
@@ -67,16 +79,6 @@ namespace Win2DExperimentation
         {
             canvas.RemoveFromVisualTree();
             canvas = null;
-        }
-
-        private Vector2 InternalToActual(Vector2 intern)
-        {
-            var mapWidth = canvas.Width;
-            var mapHeight = canvas.Height;
-            
-            return new Vector2(
-                (float) mapWidth * intern.X / internalWidth,
-                (float) mapHeight * intern.Y / internalHeight);
         }
     }
 }
