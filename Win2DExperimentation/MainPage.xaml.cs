@@ -15,6 +15,7 @@ using Windows.UI.Xaml.Navigation;
 using Windows.UI;
 using Microsoft.Graphics.Canvas.UI.Xaml;
 using Windows.UI.Popups;
+using System.Numerics;
 
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
@@ -25,36 +26,57 @@ namespace Win2DExperimentation
     /// </summary>
     public sealed partial class MainPage : Page
     {
+        const int internalWidth = 640;
+        const int internalHeight = 480;
+        Vector2 spherePosition = new Vector2(0, 240);
+        Vector2 sphereSpeed = new Vector2(1, 0) / (TimeSpan.FromSeconds(1.0 / 60).Ticks);
+        
         public MainPage()
         {
             this.InitializeComponent();
         }
 
-        void CanvasControl_Draw(CanvasControl sender, CanvasDrawEventArgs args)
+        private void canvas_CreateResources(CanvasAnimatedControl sender, Microsoft.Graphics.Canvas.UI.CanvasCreateResourcesEventArgs args)
         {
-            sender.DoubleTapped += Sender_DoubleTapped;
-            args.DrawingSession.DrawEllipse(155, 115, 80, 30, Colors.Black, 3);
-            args.DrawingSession.DrawText("Hello, world!", 100, 100, Colors.Yellow);
+            
         }
 
-        private async void Sender_DoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
+        private void canvas_Update(ICanvasAnimatedControl sender, CanvasAnimatedUpdateEventArgs args)
         {
-            var dialog = new MessageDialog("You double tapped!");
-            dialog.Title = "MessageDialog test";
-            dialog.Commands.Add(new UICommand { Label = "Sure did!", Id = 0 });
-            dialog.Commands.Add(new UICommand { Label = "Maybe...", Id = 1 });
-            dialog.DefaultCommandIndex = 0;
-            dialog.CancelCommandIndex = 1;
-            var res = await dialog.ShowAsync();
-
-            switch ((int)res.Id)
+            var timeSinceLastUpdate = args.Timing.ElapsedTime.Ticks;
+            var changeInPosition = sphereSpeed * timeSinceLastUpdate;
+            spherePosition = spherePosition + changeInPosition;
+            if (spherePosition.X > internalWidth)
             {
-                case 0:
-                    await new MessageDialog("You seem confident.").ShowAsync();
-                    break;
-                case 1:
-                    break;
+                spherePosition.X = 0;
             }
+        }
+
+        private void canvas_Draw(ICanvasAnimatedControl sender, CanvasAnimatedDrawEventArgs args)
+        {
+            var debug = String.Format("Pos {0},{1}", spherePosition.X, spherePosition.Y);
+            args.DrawingSession.DrawText(debug, new Vector2(0, 0), Colors.Black);
+        }
+
+        private void canvas_PointerPressed(object sender, PointerRoutedEventArgs e)
+        {
+
+        }
+
+        private void canvas_Unloaded(object sender, RoutedEventArgs e)
+        {
+            canvas.RemoveFromVisualTree();
+            canvas = null;
+        }
+
+        private Vector2 InternalToActual(Vector2 intern)
+        {
+            var mapWidth = canvas.Width;
+            var mapHeight = canvas.Height;
+            
+            return new Vector2(
+                (float) mapWidth * intern.X / internalWidth,
+                (float) mapHeight * intern.Y / internalHeight);
         }
     }
 }
