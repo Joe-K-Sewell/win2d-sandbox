@@ -13,6 +13,8 @@
                                       CreateResources="canvas_CreateResources"
                                       Update="canvas_Update"
                                       Draw="canvas_Draw"
-                                      Unloaded="canvas_Unloaded"/>
+                                      Unloaded="canvas_Unloaded"
+                                      PointerPressed="canvas_PointerPressed"
+                                      />
     </Grid>
 </Page>

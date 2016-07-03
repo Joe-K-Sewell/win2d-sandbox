@@ -26,11 +26,15 @@ namespace Win2DExperimentation
     /// </summary>
     public sealed partial class MainPage : Page
     {
+        const int circleRadius = 12;
+        const int circleThickness = 25;
         const int internalWidth = 640;
         const int internalHeight = 480;
-        Vector2 spherePosition = new Vector2(0, 240);
-        Vector2 sphereSpeed = new Vector2(1, 0) / (TimeSpan.FromSeconds(1.0 / 60).Ticks);
-        
+        Vector2 spherePosition = new Vector2(0, 120);
+        Vector2 sphereSpeed = new Vector2(1, 1) / (TimeSpan.FromSeconds(1.0 / 60).Ticks);
+        DateTime startTime;
+        bool pausePending = false;
+
         public MainPage()
         {
             this.InitializeComponent();
@@ -38,7 +42,7 @@ namespace Win2DExperimentation
 
         private void canvas_CreateResources(CanvasAnimatedControl sender, Microsoft.Graphics.Canvas.UI.CanvasCreateResourcesEventArgs args)
         {
-            
+            startTime = DateTime.Now;
         }
 
         private void canvas_Update(ICanvasAnimatedControl sender, CanvasAnimatedUpdateEventArgs args)
@@ -46,39 +50,62 @@ namespace Win2DExperimentation
             var timeSinceLastUpdate = args.Timing.ElapsedTime.Ticks;
             var changeInPosition = sphereSpeed * timeSinceLastUpdate;
             spherePosition = spherePosition + changeInPosition;
-            if (spherePosition.X > internalWidth)
-            {
-                spherePosition.X = 0;
-            }
+            spherePosition.X = spherePosition.X % internalWidth;
+            spherePosition.Y = spherePosition.Y % internalHeight;
         }
 
         private void canvas_Draw(ICanvasAnimatedControl sender, CanvasAnimatedDrawEventArgs args)
         {
             var session = args.DrawingSession;
-            var debug = String.Format("Pos {0},{1}", spherePosition.X, spherePosition.Y);
-            
+            var timeElapsed = (DateTime.Now - startTime).TotalSeconds;
+            var debug = String.Format("    Time {2}s, Pos {0},{1}, Paused {3}", 
+                spherePosition.X, spherePosition.Y, timeElapsed, sender.Paused);
             session.DrawText(debug, new Vector2(0, 0), Colors.Black);
             
-            // Figure out the actual pixels
-            var mapWidth = sender.Size.Width;
-            var mapHeight = sender.Size.Height;
+            var actualSpherePosition = InternalToActual(sender, spherePosition);
+            session.DrawCircle(actualSpherePosition, circleRadius, Colors.Blue, circleThickness);
 
-            var actualSpherePosition = new Vector2(
-                (float)mapWidth * spherePosition.X / internalWidth,
-                (float)mapHeight * spherePosition.Y / internalHeight);
-
-            session.DrawText("<marquee>", actualSpherePosition, Colors.Blue);
-        }
-
-        private void canvas_PointerPressed(object sender, PointerRoutedEventArgs e)
-        {
-
+            if (pausePending)
+            {
+                pausePending = false;
+                sender.Paused = true;
+            }
         }
 
         private void canvas_Unloaded(object sender, RoutedEventArgs e)
         {
             canvas.RemoveFromVisualTree();
             canvas = null;
+        }
+
+        private void canvas_PointerPressed(object sender, PointerRoutedEventArgs e)
+        {
+            var theSender = sender as CanvasAnimatedControl;
+            if (theSender.Paused)
+            {
+                theSender.Paused = false;
+            }
+            else
+            {
+                var point = e.GetCurrentPoint(theSender).Position;
+                spherePosition = ActualToInternal(theSender, point.ToVector2());
+                pausePending = true;
+            }
+        }
+
+        private Vector2 InternalToActual(ICanvasAnimatedControl map, Vector2 internalCoords)
+        {
+            // internalCoords * actualSize = actualCoords * internalSize
+            return new Vector2(
+                (float) map.Size.Width * internalCoords.X / internalWidth,
+                (float) map.Size.Height * internalCoords.Y / internalHeight);
+        }
+
+        private Vector2 ActualToInternal(ICanvasAnimatedControl map, Vector2 actualCoords)
+        {
+            return new Vector2(
+                actualCoords.X * internalWidth / (float)map.Size.Width,
+                actualCoords.Y * internalHeight / (float)map.Size.Height);
         }
     }
 }
