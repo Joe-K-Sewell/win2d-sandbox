@@ -27,6 +27,29 @@ namespace Tutorial
     /// </summary>
     public sealed partial class MainPage : Page
     {
+        Random ayn = new Random();
+        private Vector2 RndPos()
+        {
+            return new Vector2(
+                (float) ayn.NextDouble() * 500f,
+                (float) ayn.NextDouble() * 500f);
+        }
+
+        private float RndRad()
+        {
+            return (float) ayn.NextDouble() * 150f;
+        }
+
+        private byte RndByte()
+        {
+            return (byte) ayn.Next(256);
+        }
+
+        private Color RndColor()
+        {
+            return Color.FromArgb(255, RndByte(), RndByte(), RndByte());
+        }
+
         public MainPage()
         {
             this.InitializeComponent();
@@ -34,15 +57,39 @@ namespace Tutorial
 
         private void myCanvas_Draw(CanvasControl sender, CanvasDrawEventArgs args)
         {
-            args.DrawingSession.DrawText("Hello, world!", 100, 100, Colors.Black);
-            args.DrawingSession.DrawCircle(125, 125, 100, Colors.Green);
-            args.DrawingSession.DrawLine(0, 0, 50, 200, Colors.Red);
         }
 
         private void Page_Unloaded(object sender, RoutedEventArgs e)
         {
-            this.myCanvas.RemoveFromVisualTree();
-            this.myCanvas = null;
+            //this.myCanvas.RemoveFromVisualTree();
+            //this.myCanvas = null;
+        }
+
+        GaussianBlurEffect blurEffect;
+
+        private void myAnimatedCanvas_CreateResources(CanvasAnimatedControl sender, Microsoft.Graphics.Canvas.UI.CanvasCreateResourcesEventArgs args)
+        {
+            var commandList = new CanvasCommandList(sender);
+            using (var session = commandList.CreateDrawingSession())
+            {
+                for (int i = 0; i < 25; i++)
+                {
+                    session.DrawText("Hello, world!", RndPos(), RndColor());
+                    session.DrawCircle(RndPos(), RndRad(), RndColor());
+                    session.DrawLine(RndPos(), RndPos(), RndColor());
+                }
+            }
+
+            blurEffect = new GaussianBlurEffect();
+            blurEffect.Source = commandList;
+            blurEffect.BlurAmount = 10.0f;
+        }
+
+        private void myAnimatedCanvas_Draw(ICanvasAnimatedControl sender, CanvasAnimatedDrawEventArgs args)
+        {
+            var radius = (float)(1 + Math.Sin(args.Timing.TotalTime.TotalSeconds)) * 10f;
+            blurEffect.BlurAmount = radius;
+            args.DrawingSession.DrawImage(blurEffect);
         }
     }
 }
