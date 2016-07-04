@@ -10,10 +10,10 @@
     Unloaded="Page_Unloaded">
 
     <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
-        <!--<canvas:CanvasControl x:Name="myCanvas" 
-                              Draw="myCanvas_Draw"/>-->
-        <canvas:CanvasAnimatedControl x:Name="myAnimatedCanvas"
+        <canvas:CanvasControl x:Name="myCanvas" 
+                              Draw="myCanvas_Draw"/>
+        <!--<canvas:CanvasAnimatedControl x:Name="myAnimatedCanvas"
                                       CreateResources="myAnimatedCanvas_CreateResources"
-                                      Draw="myAnimatedCanvas_Draw" />
+                                      Draw="myAnimatedCanvas_Draw" />-->
     </Grid>
 </Page>

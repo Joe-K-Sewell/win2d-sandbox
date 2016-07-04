@@ -57,12 +57,29 @@ namespace Tutorial
 
         private void myCanvas_Draw(CanvasControl sender, CanvasDrawEventArgs args)
         {
+            var commandList = new CanvasCommandList(sender);
+            using (var session = commandList.CreateDrawingSession())
+            {
+                for (int i = 0; i < 25; i++)
+                {
+                    session.DrawText("Hello, world!", RndPos(), RndColor());
+                    session.DrawCircle(RndPos(), RndRad(), RndColor());
+                    session.DrawLine(RndPos(), RndPos(), RndColor());
+                }
+            }
+
+            blurEffect = new GaussianBlurEffect();
+            blurEffect.Source = commandList;
+            blurEffect.BlurAmount = 10.0f;
+            args.DrawingSession.DrawImage(blurEffect);
         }
 
         private void Page_Unloaded(object sender, RoutedEventArgs e)
         {
-            //this.myCanvas.RemoveFromVisualTree();
-            //this.myCanvas = null;
+            this.myCanvas.RemoveFromVisualTree();
+            this.myCanvas = null;
+            //this.myAnimatedCanvas.RemoveFromVisualTree();
+            //this.myAnimatedCanvas = null;
         }
 
         GaussianBlurEffect blurEffect;
